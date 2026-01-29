@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Athena / Glue Data Catalog for Fashion Analytics Pipeline
+
+Resources:
+
+
+  # GLUE DATABASE
+
+  FashionDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: fashion_analytics_db
+        Description: Analytics database for fashion e-commerce data
+
+
+  # TABLE 1 — SALES BY CATEGORY
+
+  SalesByCategoryTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref FashionDatabase
+      TableInput:
+        Name: sales_by_category
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: csv
+          skip.header.line.count: "1"
+        StorageDescriptor:
+          Location: s3://fashion-processed-data-yosra-nour/sales_by_category/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              separatorChar: ","
+          Columns:
+            - Name: category
+              Type: string
+            - Name: sales
+              Type: int
+
+  # TABLE 2 — SALES BY AGE GROUP
+
+  SalesByAgeGroupTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref FashionDatabase
+      TableInput:
+        Name: sales_by_age_group
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: csv
+          skip.header.line.count: "1"
+        StorageDescriptor:
+          Location: s3://fashion-processed-data-yosra-nour/sales_by_age_group/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              separatorChar: ","
+          Columns:
+            - Name: age_group
+              Type: string
+            - Name: sales
+              Type: int
+
+
+  # TABLE 3 — AVG RATING BY AGE GROUP
+
+  AvgRatingByAgeGroupTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref FashionDatabase
+      TableInput:
+        Name: avg_rating_by_age_group
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: csv
+          skip.header.line.count: "1"
+        StorageDescriptor:
+          Location: s3://fashion-processed-data-yosra-nour/avg_rating_by_age_group/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              separatorChar: ","
+          Columns:
+            - Name: age_group
+              Type: string
+            - Name: avg_rating
+              Type: double
+
+  # TABLE 4 — RECOMMENDATION RATE BY CATEGORY
+  
+  RecommendationRateByCategoryTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref FashionDatabase
+      TableInput:
+        Name: recommendation_rate_by_category
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: csv
+          skip.header.line.count: "1"
+        StorageDescriptor:
+          Location: s3://fashion-processed-data-yosra-nour/recommendation_rate_by_category/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              separatorChar: ","
+          Columns:
+            - Name: category
+              Type: string
+            - Name: recommendation_rate
+              Type: double
+
+Outputs:
+  DatabaseName:
+    Value: !Ref FashionDatabase
+    Description: Athena database name

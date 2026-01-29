@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fashion Data Pipeline using AWS Glue (Student Lab compatible)
+Resources:
+  RawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: fashion-raw-data-yosra-nour
+  ProcessedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: fashion-processed-data-yosra-nour
+  FashionGlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: fashion-data-processing-yosra-nour
+      Role: arn:aws:iam::091241497893:role/LabRole
+      Command:
+        Name: glueetl
+        ScriptLocation: s3://fashion-artifacts-yosra-nour/glue/glue_job.py
+        PythonVersion: '3'
+      GlueVersion: '4.0'
+      NumberOfWorkers: 2
+      WorkerType: G.1X
+      MaxRetries: 0
+      Timeout: 10
+      DefaultArguments:
+        --job-language: python
+        --enable-continuous-cloudwatch-log: 'true'
+        --enable-metrics: 'true'
+Outputs:
+  RawBucketName:
+    Value:
+      Ref: RawBucket
+  ProcessedBucketName:
+    Value:
+      Ref: ProcessedBucket
+  GlueJobName:
+    Value:
+      Ref: FashionGlueJob

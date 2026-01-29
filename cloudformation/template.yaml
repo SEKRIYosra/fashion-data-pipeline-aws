@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fashion Data Pipeline using AWS Glue (Student Lab compatible)
+
+Resources:
+
+
+  # S3 ARTIFACTS BUCKET 
+ 
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: fashion-artifacts-yosra-nour
+
+
+  # S3 RAW DATA BUCKET
+
+  RawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: fashion-raw-data-yosra-nour
+
+
+  # S3 PROCESSED DATA BUCKET
+
+  ProcessedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: fashion-processed-data-yosra-nour
+
+
+  # AWS GLUE JOB
+
+  FashionGlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: fashion-data-processing-yosra-nour
+      Role: arn:aws:iam::091241497893:role/LabRole
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub s3://${ArtifactsBucket}/glue/glue_job.py
+        PythonVersion: "3"
+      GlueVersion: "4.0"
+      NumberOfWorkers: 2
+      WorkerType: G.1X
+      MaxRetries: 0
+      Timeout: 10
+      DefaultArguments:
+        "--job-language": "python"
+        "--enable-continuous-cloudwatch-log": "true"
+        "--enable-metrics": "true"
+
+
+  # LAMBDA – AUTO RUN GLUE JOB
+
+  AutoRunGlueLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: fashion-auto-run-glue
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: arn:aws:iam::091241497893:role/LabRole
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+
+          glue = boto3.client("glue")
+
+          def lambda_handler(event, context):
+              print("=== AUTO RUN GLUE JOB ===")
+
+              try:
+                  response = glue.start_job_run(
+                      JobName="fashion-data-processing-yosra-nour"
+                  )
+                  print("Glue job started:", response["JobRunId"])
+
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps("Glue job started successfully")
+                  }
+
+              except Exception as e:
+                  print("ERROR:", str(e))
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps(str(e))
+                  }
+
+
+Outputs:
+  ArtifactsBucketName:
+    Value: !Ref ArtifactsBucket
+
+  RawBucketName:
+    Value: !Ref RawBucket
+
+  ProcessedBucketName:
+    Value: !Ref ProcessedBucket
+
+  GlueJobName:
+    Value: !Ref FashionGlueJob
+
+
